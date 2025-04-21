@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Video, Loader2, Check, X, Zap, Crown, Star, ChartBar, Rocket, Users, Trophy } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import Navbar from '@/components/shared/navbar';
 
 export default function Home() {
   const [hook, setHook] = useState('');
@@ -17,11 +19,12 @@ export default function Home() {
     feedback: string;
     suggestion?: string;
   } | null>(null);
+  const router = useRouter();
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      const navbarHeight = 64; // Height of the navbar
+      const navbarHeight = 64;
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
 
@@ -37,46 +40,7 @@ export default function Home() {
       setError('Please enter a hook to analyze');
       return;
     }
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ hook: hook.trim() }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || `Server error: ${response.status}`);
-      }
-
-      if (typeof data.score === 'undefined' || !data.feedback) {
-        console.error('Invalid API response structure:', data);
-        throw new Error('Received invalid analysis results from server');
-      }
-
-      setAnalysis(data);
-    } catch (error: any) {
-      console.error('Error analyzing hook:', error);
-      
-      if (error instanceof TypeError) {
-        setError('Network error. Please check your internet connection.');
-      } else if (error.name === 'SyntaxError') {
-        setError('Failed to parse server response. Please try again.');
-      } else {
-        setError(error.message || 'An unexpected error occurred. Please try again.');
-      }
-      
-      setAnalysis(null);
-    } finally {
-      setLoading(false);
-    }
+    router.push('/login');
   };
 
   const getScoreColor = (score: number) => {
@@ -106,9 +70,9 @@ export default function Home() {
     buttonText?: string;
     buttonVariant?: "default" | "secondary" | "outline";
   }) => (
-    <Card className={`relative ${popular ? 'border-primary shadow-lg scale-105' : ''}`}>
+    <Card className={`relative ${popular ? 'border-primary shadow-lg scale-105' : ''} hover:shadow-xl transition-all duration-300`}>
       {popular && (
-        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
+        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-purple-500">
           Most Popular
         </Badge>
       )}
@@ -127,7 +91,7 @@ export default function Home() {
         <ul className="space-y-2 mb-6">
           {features.map((feature, i) => (
             <li key={i} className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-500" />
+              <Check className="h-4 w-4 text-emerald-500" />
               <span className="text-sm">{feature}</span>
             </li>
           ))}
@@ -138,7 +102,7 @@ export default function Home() {
             </li>
           ))}
         </ul>
-        <Button className="w-full" variant={buttonVariant}>
+        <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600" variant={buttonVariant}>
           {buttonText}
         </Button>
       </CardContent>
@@ -160,79 +124,44 @@ export default function Home() {
     quote: string;
     image: string;
   }) => (
-    <Card className="text-left">
+    <Card className="text-left hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
       <CardContent className="pt-6">
         <div className="flex items-start gap-4 mb-4">
           <img
             src={image}
             alt={name}
-            className="w-12 h-12 rounded-full object-cover"
+            className="w-12 h-12 rounded-full object-cover ring-2 ring-indigo-500"
           />
           <div>
-            <h3 className="font-semibold">{name}</h3>
+            <h3 className="font-semibold text-indigo-600 dark:text-indigo-400">{name}</h3>
             <p className="text-sm text-muted-foreground">{role}</p>
             <p className="text-sm text-muted-foreground">{followers} followers on {platform}</p>
           </div>
         </div>
-        <p className="italic">{quote}</p>
+        <p className="italic text-gray-600 dark:text-gray-300">{quote}</p>
       </CardContent>
     </Card>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      {/* Navbar */}
-      <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b border-border">
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Video className="w-6 h-6 text-primary" />
-              <span className="font-semibold text-lg">Hook Analyzer AI</span>
-            </div>
-            <div className="hidden md:flex items-center gap-6">
-              <Button variant="ghost" onClick={() => scrollToSection('features')}>Features</Button>
-              <Button variant="ghost" onClick={() => scrollToSection('pricing')}>Pricing</Button>
-              <Button variant="ghost" onClick={() => scrollToSection('testimonials')}>Testimonials</Button>
-              <Button variant="ghost" onClick={() => scrollToSection('faq')}>FAQ</Button>
-              <Button onClick={() => scrollToSection('try-it')}>Get Started</Button>
-            </div>
-            <div className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <span className="sr-only">Open menu</span>
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
+      <Navbar />
 
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16 text-center">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <Video className="w-8 h-8 text-primary" />
-          <h1 className="text-4xl font-bold text-primary">Hook Analyzer AI</h1>
+          <Video className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Hook Analyzer AI</h1>
         </div>
-        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+        <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
           Create viral-worthy hooks for your social media content using AI-powered analysis and suggestions.
         </p>
 
         {/* Demo Section */}
         <div id="try-it" className="max-w-3xl mx-auto mb-20">
-          <Card>
+          <Card className="border-2 border-indigo-100 dark:border-indigo-900">
             <CardHeader>
-              <CardTitle>Try It Now</CardTitle>
+              <CardTitle className="text-indigo-600 dark:text-indigo-400">Try It Now</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {error && (
@@ -247,12 +176,12 @@ export default function Home() {
                 </p>
                 <Textarea
                   placeholder="Example: 'This hidden iPhone feature just saved my life...'"
-                  className="min-h-[100px]"
+                  className="min-h-[100px] focus:ring-2 focus:ring-indigo-500"
                   value={hook}
                   onChange={(e) => setHook(e.target.value)}
                 />
                 <Button 
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
                   onClick={analyzeHook}
                   disabled={!hook.trim() || loading}
                 >
@@ -284,8 +213,8 @@ export default function Home() {
                   {analysis.suggestion && (
                     <div>
                       <h3 className="font-semibold mb-2">Suggested Improvement:</h3>
-                      <div className="bg-muted p-4 rounded-lg">
-                        <p className="italic text-muted-foreground">{analysis.suggestion}</p>
+                      <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-lg">
+                        <p className="italic text-gray-600 dark:text-gray-300">{analysis.suggestion}</p>
                       </div>
                     </div>
                   )}
@@ -297,53 +226,53 @@ export default function Home() {
         
         {/* Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-16">
-          <Card>
+          <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 hover:shadow-xl transition-all duration-300">
             <CardContent className="pt-6">
-              <div className="text-4xl font-bold text-primary mb-2">500K+</div>
-              <p className="text-muted-foreground">Hooks Analyzed</p>
+              <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">500K+</div>
+              <p className="text-gray-600 dark:text-gray-300">Hooks Analyzed</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 hover:shadow-xl transition-all duration-300">
             <CardContent className="pt-6">
-              <div className="text-4xl font-bold text-primary mb-2">87%</div>
-              <p className="text-muted-foreground">Average Engagement Increase</p>
+              <div className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">87%</div>
+              <p className="text-gray-600 dark:text-gray-300">Average Engagement Increase</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 hover:shadow-xl transition-all duration-300">
             <CardContent className="pt-6">
-              <div className="text-4xl font-bold text-primary mb-2">10K+</div>
-              <p className="text-muted-foreground">Active Creators</p>
+              <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">10K+</div>
+              <p className="text-gray-600 dark:text-gray-300">Active Creators</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Features Section */}
         <div id="features">
-          <h2 className="text-3xl font-bold mb-12">Why Creators Love Us</h2>
+          <h2 className="text-3xl font-bold mb-12 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Why Creators Love Us</h2>
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4 mb-20">
-            <Card>
+            <Card className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-indigo-50 dark:from-gray-800 dark:to-indigo-900/20">
               <CardContent className="pt-6">
-                <ChartBar className="h-12 w-12 text-primary mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Data-Driven Insights</h3>
-                <p className="text-muted-foreground">
+                <ChartBar className="h-12 w-12 text-indigo-600 dark:text-indigo-400 mb-4" />
+                <h3 className="text-xl font-semibold mb-2 text-indigo-600 dark:text-indigo-400">Data-Driven Insights</h3>
+                <p className="text-gray-600 dark:text-gray-300">
                   Get detailed analytics on what makes your hooks perform better than others.
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-purple-50 dark:from-gray-800 dark:to-purple-900/20">
               <CardContent className="pt-6">
-                <Rocket className="h-12 w-12 text-primary mb-4" />
-                <h3 className="text-xl font-semibold mb-2">AI-Powered Suggestions</h3>
-                <p className="text-muted-foreground">
+                <Rocket className="h-12 w-12 text-purple-600 dark:text-purple-400 mb-4" />
+                <h3 className="text-xl font-semibold mb-2 text-purple-600 dark:text-purple-400">AI-Powered Suggestions</h3>
+                <p className="text-gray-600 dark:text-gray-300">
                   Let AI help you craft hooks that grab attention and drive engagement.
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-indigo-50 dark:from-gray-800 dark:to-indigo-900/20">
               <CardContent className="pt-6">
-                <Trophy className="h-12 w-12 text-primary mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Proven Results</h3>
-                <p className="text-muted-foreground">
+                <Trophy className="h-12 w-12 text-indigo-600 dark:text-indigo-400 mb-4" />
+                <h3 className="text-xl font-semibold mb-2 text-indigo-600 dark:text-indigo-400">Proven Results</h3>
+                <p className="text-gray-600 dark:text-gray-300">
                   Join thousands of creators who've increased their reach using our tool.
                 </p>
               </CardContent>
@@ -353,7 +282,7 @@ export default function Home() {
 
         {/* Testimonials */}
         <div id="testimonials">
-          <h2 className="text-3xl font-bold mb-12">Creator Success Stories</h2>
+          <h2 className="text-3xl font-bold mb-12 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Creator Success Stories</h2>
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4 mb-20">
             <TestimonialCard
               name="Sarah Chen"
@@ -384,13 +313,13 @@ export default function Home() {
 
         {/* Pricing Section */}
         <div id="pricing">
-          <h2 className="text-3xl font-bold mb-12">Choose Your Plan</h2>
+          <h2 className="text-3xl font-bold mb-12 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Choose Your Plan</h2>
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4 mb-20">
             <PricingCard
               title="Creator Starter"
               price="Free"
               description="Perfect for testing the tool"
-              icon={<Star className="h-5 w-5" />}
+              icon={<Star className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />}
               features={[
                 "3 hook analyses per day",
                 "Basic virality score",
@@ -409,7 +338,7 @@ export default function Home() {
               title="Viral Pro"
               price="$29"
               description="Unlock your viral potential"
-              icon={<Zap className="h-5 w-5" />}
+              icon={<Zap className="h-5 w-5 text-purple-600 dark:text-purple-400" />}
               features={[
                 "Unlimited hook analyses",
                 "Advanced virality scoring",
@@ -425,7 +354,7 @@ export default function Home() {
               title="Creator+ Lab"
               price="$99"
               description="For power users who want more"
-              icon={<Crown className="h-5 w-5" />}
+              icon={<Crown className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />}
               features={[
                 "Everything in Pro",
                 "Viral Hook Swipe File",
@@ -442,24 +371,24 @@ export default function Home() {
 
         {/* FAQ Section */}
         <div id="faq">
-          <h2 className="text-3xl font-bold mb-12">Frequently Asked Questions</h2>
+          <h2 className="text-3xl font-bold mb-12 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Frequently Asked Questions</h2>
           <div className="max-w-3xl mx-auto px-4 mb-20 space-y-6 text-left">
-            <Card>
+            <Card className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-indigo-50 dark:from-gray-800 dark:to-indigo-900/20">
               <CardContent className="pt-6">
-                <h3 className="font-semibold mb-2">How does Hook Analyzer work?</h3>
-                <p className="text-muted-foreground">Our AI analyzes your hook based on millions of successful social media posts, providing specific feedback on engagement potential, emotional impact, and areas for improvement.</p>
+                <h3 className="font-semibold mb-2 text-indigo-600 dark:text-indigo-400">How does Hook Analyzer work?</h3>
+                <p className="text-gray-600 dark:text-gray-300">Our AI analyzes your hook based on millions of successful social media posts, providing specific feedback on engagement potential, emotional impact, and areas for improvement.</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-purple-50 dark:from-gray-800 dark:to-purple-900/20">
               <CardContent className="pt-6">
-                <h3 className="font-semibold mb-2">Can I use it for different platforms?</h3>
-                <p className="text-muted-foreground">Yes! Hook Analyzer works for YouTube, TikTok, Instagram, and Twitter content. The AI adjusts its analysis based on platform-specific trends and best practices.</p>
+                <h3 className="font-semibold mb-2 text-purple-600 dark:text-purple-400">Can I use it for different platforms?</h3>
+                <p className="text-gray-600 dark:text-gray-300">Yes! Hook Analyzer works for YouTube, TikTok, Instagram, and Twitter content. The AI adjusts its analysis based on platform-specific trends and best practices.</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-indigo-50 dark:from-gray-800 dark:to-indigo-900/20">
               <CardContent className="pt-6">
-                <h3 className="font-semibold mb-2">How accurate are the predictions?</h3>
-                <p className="text-muted-foreground">Our AI has been trained on millions of successful posts and achieves an 87% accuracy rate in predicting engagement potential. The more you use it, the better it gets at understanding your style and audience.</p>
+                <h3 className="font-semibold mb-2 text-indigo-600 dark:text-indigo-400">How accurate are the predictions?</h3>
+                <p className="text-gray-600 dark:text-gray-300">Our AI has been trained on millions of successful posts and achieves an 87% accuracy rate in predicting engagement potential. The more you use it, the better it gets at understanding your style and audience.</p>
               </CardContent>
             </Card>
           </div>
@@ -467,21 +396,21 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-card text-card-foreground py-12">
+      <footer className="bg-white dark:bg-gray-900 py-12 border-t border-gray-200 dark:border-gray-700">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <Video className="w-6 h-6 text-primary" />
-                <h3 className="font-bold">Hook Analyzer AI</h3>
+                <Video className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                <h3 className="font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Hook Analyzer AI</h3>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 Empowering creators to craft viral-worthy content with AI-powered insights.
               </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <h3 className="font-semibold mb-4 text-indigo-600 dark:text-indigo-400">Product</h3>
+              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
                 <li>Features</li>
                 <li>Pricing</li>
                 <li>Use Cases</li>
@@ -489,8 +418,8 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">Resources</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <h3 className="font-semibold mb-4 text-purple-600 dark:text-purple-400">Resources</h3>
+              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
                 <li>Blog</li>
                 <li>Documentation</li>
                 <li>Community</li>
@@ -498,8 +427,8 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <h3 className="font-semibold mb-4 text-indigo-600 dark:text-indigo-400">Company</h3>
+              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
                 <li>About</li>
                 <li>Careers</li>
                 <li>Terms of Service</li>
@@ -507,8 +436,8 @@ export default function Home() {
               </ul>
             </div>
           </div>
-          <div className="flex justify-center pt-8 border-t border-border">
-            <p className="text-sm text-muted-foreground">© 2024 Hook Analyzer AI. All rights reserved.</p>
+          <div className="flex justify-center pt-8 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-300">© 2024 Hook Analyzer AI. All rights reserved.</p>
           </div>
         </div>
       </footer>
